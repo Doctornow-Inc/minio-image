@@ -1,0 +1,35 @@
+name: Verify
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: [Publish]
+    types: [completed]
+permissions: {}
+env:
+  IMAGE: ghcr.io/doctornow-inc/minio
+  TAG: RELEASE.2025-04-22T22-12-26Z
+jobs:
+  verify:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    strategy:
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      # Deliberately no login: this proves consumers can pull anonymously.
+      - name: Anonymous pull (no login)
+        run: docker pull "$IMAGE:$TAG"
+      - name: Version is the release, not DEVELOPMENT
+        run: docker run --rm "$IMAGE:$TAG" --version | tee /dev/stderr | grep -q "RELEASE.2025-04-22T22-12-26Z"
+      - name: Server, in-container healthcheck, console
+        run: |
+          docker run -d --name m -p 9000:9000 -p 9001:9001 \
+            -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin \
+            "$IMAGE:$TAG" server /data --console-address ":9001"
+          for _ in $(seq 1 30); do
+            docker exec m curl -fsS http://localhost:9000/minio/health/live && break
+            sleep 1
+          done
+          docker exec m curl -fsS http://localhost:9000/minio/health/live
+          curl -fsS http://localhost:9001/ | grep -qi "<html"
+          docker logs m
