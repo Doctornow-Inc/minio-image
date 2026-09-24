@@ -36,7 +36,7 @@ The package is public, so pulling it needs no registry login. Pin it by `tag@dig
 ghcr.io/doctornow-inc/minio:RELEASE.2025-04-22T22-12-26Z@sha256:<digest>
 ```
 
-Published digest: _not yet published_
+Published digest (index, `linux/amd64` + `linux/arm64`): `sha256:7d24ad55c205e34f75fa151f077d936c437dbba029c5bd0ec7159382ce748ac9`
 
 ```sh
 docker run -p 9000:9000 -p 9001:9001 \
