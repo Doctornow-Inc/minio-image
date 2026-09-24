@@ -23,13 +23,13 @@ jobs:
         run: docker run --rm "$IMAGE:$TAG" --version | tee /dev/stderr | grep -q "RELEASE.2025-04-22T22-12-26Z"
       - name: Server, in-container healthcheck, console
         run: |
-          docker run -d --name m -p 9000:9000 -p 9001:9001 \
+          docker run -d --name minio -p 9000:9000 -p 9001:9001 \
             -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin \
             "$IMAGE:$TAG" server /data --console-address ":9001"
           for _ in $(seq 1 30); do
-            docker exec m curl -fsS http://localhost:9000/minio/health/live && break
+            docker exec minio curl -fsS http://localhost:9000/minio/health/live && break
             sleep 1
           done
-          docker exec m curl -fsS http://localhost:9000/minio/health/live
+          docker exec minio curl -fsS http://localhost:9000/minio/health/live
           curl -fsS http://localhost:9001/ | grep -qi "<html"
-          docker logs m
+          docker logs minio
